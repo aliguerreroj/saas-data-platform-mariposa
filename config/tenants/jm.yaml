@@ -1,0 +1,4 @@
+# Overrides específicos del tenant jm (Jamaica).
+tenant:
+  code: "jm"
+  display_name: "Jamaica"

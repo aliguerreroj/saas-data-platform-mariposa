@@ -1,0 +1,4 @@
+# Overrides específicos del tenant pe (Perú).
+tenant:
+  code: "pe"
+  display_name: "Perú"

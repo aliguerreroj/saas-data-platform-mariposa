@@ -1,0 +1,5 @@
+# Overrides específicos del tenant sv (El Salvador).
+# Onboarding de un tenant nuevo = agregar un archivo como este.
+tenant:
+  code: "sv"
+  display_name: "El Salvador"

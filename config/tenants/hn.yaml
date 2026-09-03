@@ -1,0 +1,5 @@
+# Overrides específicos del tenant hn (Honduras).
+# Onboarding de un tenant nuevo = agregar un archivo como este.
+tenant:
+  code: "hn"
+  display_name: "Honduras"

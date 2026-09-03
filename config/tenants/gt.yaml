@@ -1,0 +1,4 @@
+# Overrides específicos del tenant gt (Guatemala).
+tenant:
+  code: "gt"
+  display_name: "Guatemala"

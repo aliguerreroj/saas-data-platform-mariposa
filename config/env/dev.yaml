@@ -1,0 +1,9 @@
+paths:
+  bronze: "data/bronze"
+  silver: "data/silver"
+  gold: "data/gold"
+  quarantine_root: "data"
+  quality_logs: "data/shared/quality_logs"
+
+quality:
+  fail_on_critical: false

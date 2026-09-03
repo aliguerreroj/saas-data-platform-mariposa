@@ -1,0 +1,4 @@
+# Overrides específicos del tenant ec (Ecuador).
+tenant:
+  code: "ec"
+  display_name: "Ecuador"

@@ -1,0 +1,26 @@
+paths:
+  raw: "raw"
+  bronze: "data/bronze"
+  silver: "data/silver"
+  gold: "data/gold"
+  quarantine_root: "data"
+  quality_logs: "data/shared/quality_logs"
+
+spark:
+  app_name: "saas-data-platform"
+  shuffle_partitions: 8    # bajo a propósito para un dataset chico corriendo local
+
+execution:
+  tenant: "all"          # código de tenant en minúscula, o "all"
+  start_date: null        # YYYY-MM-DD, se pasa por CLI en cada corrida
+  end_date: null           # YYYY-MM-DD, se pasa por CLI en cada corrida
+  fail_fast: false         # false = seguir con los demás tenants y reportar el fallo al final
+
+quality:
+  fail_on_critical: false  # si true, aborta antes de Gold cuando una validación critical falla
+
+business_rules:
+  case_units_multiplier: 20                       # 1 CS (caja) = 20 ST (unidad individual)
+  valid_delivery_types: ["ZPRE", "ZVE1", "Z04", "Z05"]   # cualquier otro valor se descarta
+  routine_delivery_types: ["ZPRE", "ZVE1"]          # entregas de rutina
+  bonus_delivery_types: ["Z04", "Z05"]               # entregas de bonificación

@@ -197,15 +197,27 @@ def scd2_merge_materials(existing_df: DataFrame | None, incoming_df: DataFrame) 
     # lo trae como string (tal cual llega de la fuente). unionByName no puede
     # unir una columna boolean con una string.
     incoming_no_flag = incoming_df.drop("is_current")
+
+    # Clave de negocio del merge (5.7): (material, valid_from).
+    key_cols = ["material", "valid_from"]
+
     if existing_df is None:
         base = incoming_no_flag
     else:
-        base = existing_df.drop("is_current").unionByName(incoming_no_flag, allowMissingColumns=True)
+        existing_no_flag = existing_df.drop("is_current")
+        # Si la misma clave (material, valid_from) aparece en existing_df Y
+        # en incoming_df, el snapshot de HOY (incoming_df) siempre tiene que
+        # ganar -- puede traer una versión más actualizada de esa fila (ej.
+        # un valid_to que antes estaba abierto y el archivo de hoy ya cerró
+        # porque entró una versión nueva del material). Sin este anti-join,
+        # dropDuplicates() más abajo no garantiza cuál de las dos copias
+        # sobrevive: podía quedarse con la de existing_df (desactualizada) y
+        # dejar el material con dos filas open-ended al mismo tiempo.
+        existing_not_overwritten = existing_no_flag.join(
+            incoming_no_flag.select(*key_cols).distinct(), on=key_cols, how="left_anti"
+        )
+        base = existing_not_overwritten.unionByName(incoming_no_flag, allowMissingColumns=True)
 
-    # Clave de negocio del merge (5.7): (material, valid_from). Si el mismo
-    # par aparece en existing_df Y en incoming_df (se re-procesó el mismo
-    # archivo), dropDuplicates se queda con una sola copia.
-    key_cols = ["material", "valid_from"]
     deduped = base.dropDuplicates(key_cols)
 
     # Para cada material, la fila con valid_to=9999-12-31 es la vigente.

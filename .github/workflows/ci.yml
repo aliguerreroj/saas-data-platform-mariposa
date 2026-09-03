@@ -1,0 +1,56 @@
+name: CI
+
+# Corre en cada push y en cada pull request, sin importar la rama -- así
+# cualquier cambio (el nuestro o de un colaborador futuro) se valida antes
+# de llegar a main.
+on:
+  push:
+  pull_request:
+
+jobs:
+  lint-test-validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # PySpark necesita una JVM para levantar la SparkSession, incluso la
+      # "plain" (sin Delta) que usan los tests -- ver conftest.py y
+      # spark_session.py::get_plain_spark. Java 17 porque spark_session.py
+      # ya sabe aplicar los --add-opens que Spark/Delta 3.5.x necesitan en
+      # Java 17+ (_java_major_version()).
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "17"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyspark==3.5.3 omegaconf pytest ruff
+
+      # Lint primero: es el chequeo más rápido, así fallamos temprano si hay
+      # un import sin usar o una variable no definida, antes de gastar
+      # tiempo levantando la JVM para los tests.
+      - name: Lint (ruff)
+        run: ruff check src tests scripts
+
+      # Valida que las 3 capas de config (base -> env -> tenant) carguen sin
+      # error para TODAS las combinaciones (env, tenant) existentes -- no
+      # necesita Spark, así que corre rápido y aparte de pytest.
+      - name: Validar configs de tenants (env x tenant)
+        run: PYTHONPATH=src python scripts/validate_configs.py
+
+      # Tests de transformaciones puras (bronze/silver/gold/quality). Usan
+      # get_plain_spark() (sin Delta) a propósito -- así este job no
+      # depende de que Maven pueda resolver io.delta:delta-spark, que puede
+      # fallar o tardar en un runner de CI sin caché.
+      - name: Run tests (pytest)
+        run: pytest -v

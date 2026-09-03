@@ -1,0 +1,22 @@
+[tool.pytest.ini_options]
+# Permite correr `pytest` desde la raíz del repo sin tener que exportar
+# PYTHONPATH=src a mano cada vez (pytest agrega esto a sys.path antes de
+# recolectar los tests).
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+[tool.ruff]
+# 110 y no el default de ruff (88): varios comentarios/docstrings en español
+# ya superan 88 caracteres (hasta 106 en el código actual, ver src/*.py) y
+# no tiene sentido reformatear comentarios que ya están bien solo para
+# cumplir un límite arbitrario.
+line-length = 110
+target-version = "py311"
+
+[tool.ruff.lint]
+# E = pycodestyle errors, F = pyflakes (imports sin usar, variables sin
+# usar, etc.), W = pycodestyle warnings. No agregamos reglas más estrictas
+# (como import-sorting) para no generar ruido en un repo que ya está escrito
+# y funcionando -- el objetivo de este linter es atrapar errores reales
+# (F401, F821, etc.), no imponer un estilo nuevo.
+select = ["E", "F", "W"]

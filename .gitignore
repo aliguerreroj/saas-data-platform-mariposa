@@ -6,3 +6,5 @@ data/
 data_qa/
 data_main/
 *.egg-info/
+.pytest_cache/
+.ruff_cache/

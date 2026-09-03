@@ -71,3 +71,31 @@ material_category, material_base_price, is_material_dimension_matched.
 ## Candidatos a "mejora tecnológica futura" (Horizonte 2-3)
 (pendiente -- completar cuando lleguemos a Gold/CI, seguramente algo sobre
 Auto Loader/streaming real para Bronze, o testing de contrato de schema)
+
+**Cuarentena es append-only incluso entre re-corridas del mismo rango de
+fechas** (a diferencia de fact_deliveries, que sí es idempotente vía MERGE
+INTO). Cada corrida agrega sus filas de cuarentena identificadas por
+_batch_id, sin deduplicar contra corridas anteriores -- es un log auditable
+de "qué se detectó roto en cada corrida", no un estado actual. Verificado
+corriendo el pipeline 2 veces seguidas: dim_materials y fact_deliveries se
+mantuvieron estables (35 y 374 filas), la cuarentena creció de 7 a 14.
+
+**materials_catalog.csv no tiene columna de país/tenant -- es un catálogo
+global compartido**, pero la arquitectura (5.2) exige aislamiento de
+dim_materials por schema/tenant. Resolución: replicamos el mismo catálogo
+global dentro del dim_materials de cada tenant (verificado: los 6 tenants
+dieron 35 versiones de materiales idénticas), respetando el aislamiento
+pedido por la arquitectura sin inventar un concepto de "catálogo
+compartido" que el enunciado no define.
+
+**quality_logs se arma sin usar spark.createDataFrame() sobre datos de Python.**
+La forma "obvia" de construir la tabla de resultados de Quality es armar una
+lista de tuplas en Python y pasarla a spark.createDataFrame(lista, schema).
+En Windows esto resultó frágil: esa función reparte los datos vía
+sc.parallelize() y los serializa a través de un proceso "trabajador" de
+Python lanzado desde Java (un PythonRDD) -- mecanismo que en Windows falla
+con cierta frecuencia (rutas con espacios, antivirus, o la arquitectura que
+usa Spark ahí, que no tiene fork() como Linux/Mac). Para una tabla de apenas
+5 filas por corrida no vale la pena depender de eso: la resolución fue
+construir cada fila con spark.range(1).select(F.lit(...)) -- operaciones que
+corren enteramente dentro de la JVM, sin necesitar ningún proceso Python.

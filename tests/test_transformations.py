@@ -151,25 +151,24 @@ def test_scope_deliveries_filters_tenant_and_buckets_invalid_dates(spark):
 # normalize_units: conversión CS -> ST (5.6 / 6.2)
 # --------------------------------------------------------------------------- #
 
-
 def test_normalize_units_converts_cases_to_units(spark):
-    """1 CS = case_multiplier ST (acá usamos 12, el mismo valor real de
+    """1 CS = case_multiplier ST (acá usamos 20, el mismo valor real de
     base.yaml) -- una fila en CS debe multiplicarse, una en ST debe quedar
     exactamente igual."""
     df = _rows_to_df(
         spark,
         DELIVERIES_RAW_SCHEMA,
         [
-            _delivery_row(cantidad="3", unidad="CS"),  # 3 cajas -> 36 unidades
+            _delivery_row(cantidad="3", unidad="CS"),  # 3 cajas -> 60 unidades
             _delivery_row(cantidad="10", unidad="ST"),  # ya viene en unidades
         ],
     )
 
-    result = normalize_units(df, case_multiplier=12).orderBy("unidad").collect()
+    result = normalize_units(df, case_multiplier=20).orderBy("unidad").collect()
 
     cs_row = [r for r in result if r["unidad"] == "CS"][0]
     st_row = [r for r in result if r["unidad"] == "ST"][0]
-    assert cs_row["quantity_st"] == Decimal("36.000000")
+    assert cs_row["quantity_st"] == Decimal("60.000000")
     assert st_row["quantity_st"] == Decimal("10.000000")
     # transaction_price es simplemente precio casteado a decimal, sin tocar.
     assert cs_row["transaction_price"] == Decimal("10.500000")

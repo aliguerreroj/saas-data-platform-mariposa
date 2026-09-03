@@ -1,0 +1,10 @@
+# Dependencias de runtime -- necesarias para correr el pipeline con
+# `python -m saas_pipeline.cli`.
+pyspark==3.5.3
+delta-spark==3.2.1
+omegaconf==2.3.1
+
+# Dependencias de desarrollo -- solo hacen falta para correr tests y el
+# linter localmente (la CI las instala aparte, ver .github/workflows/ci.yml).
+pytest==8.4.2
+ruff==0.12.0

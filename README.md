@@ -64,6 +64,7 @@ no por permisos — ver la sección "Qué dejé fuera y por qué".
 │ ├── onboarding-tenant.md # cómo agregar un tenant nuevo
 │ └── infra.md # módulo Terraform ilustrativo
 ├── mentoring/ # ejercicio de code review (para un dev junior)
+├── Makefile                         # setup rápido: venv, install, lint, test, run
 ├── requirements.txt
 └── pyproject.toml # config de pytest y ruff
 
@@ -86,6 +87,11 @@ no por permisos — ver la sección "Qué dejé fuera y por qué".
 ```bash
 pip install -r requirements.txt
 ```
+Si tenés `make` disponible (Linux/Mac, o Git Bash/WSL en Windows), los mismos
+pasos —y los de test y lint— están también como targets del `Makefile`:
+`make venv`, `make install`, `make lint`, `make test`, `make validate-configs`,
+`make run-example`.
+
 
 ## Cómo correr el pipeline
 
@@ -168,3 +174,27 @@ tenant existan en el CSV compartido de `raw/` con su código en la columna
 - [`docs/onboarding-tenant.md`](docs/onboarding-tenant.md) — cómo agregar un tenant.
 - [`docs/infra.md`](docs/infra.md) — módulo Terraform ilustrativo.
 - [`mentoring/`](mentoring/) — ejercicio de code review para un dev junior.
+
+
+## Nota sobre la estructura del repo vs. Anexo B
+
+La prueba sugiere (Anexo B) una estructura con `tests/test_silver_transforms.py`
+y `tests/test_quality.py` separados, y un conjunto más chico de módulos en
+`src/saas_pipeline/`. Este repo se desvía en dos puntos, documentados acá
+como pide el propio Anexo B ("estructura alternativa, documentándola en el
+README"):
+
+1. **Un solo archivo de tests** (`tests/test_transformations.py`) en vez de
+   separar Silver y Quality. Se mantuvieron juntos porque las 10 pruebas
+   comparten el mismo fixture de `SparkSession` (`conftest.py::spark`) y el
+   mismo helper `_rows_to_df` para construir DataFrames sintéticos sin
+   pandas -- separarlos en dos archivos hoy solo duplicaría imports, sin
+   ninguna ganancia real de organización a este tamaño de suite.
+2. **Tres módulos adicionales** en `src/saas_pipeline/`: `schemas.py`
+   (los esquemas explícitos de Bronze), `delta_io.py` (las operaciones de
+   Delta -- merge, overwrite, quarantine -- centralizadas en un solo lugar
+   en vez de repetidas en bronze/silver/gold), y `spark_session.py` (la
+   construcción de la SparkSession, incluyendo los ajustes necesarios para
+   que corra en Windows). Se separaron de bronze/silver/gold.py porque son
+   infraestructura transversal, no lógica de negocio de una capa
+   específica.

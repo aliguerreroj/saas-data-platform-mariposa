@@ -113,7 +113,7 @@ ningún procesamiento.
 
 ---
 
-## Cómo se lo explicaría a un desarrollador junior
+## Cómo se lo explicaría al junior  
 
 Le diría que casi todo lo que está mal acá viene de una misma raíz: el
 código resuelve el caso feliz de una sola corrida sobre un archivo chico,
@@ -134,3 +134,28 @@ idea que le dejaría es: cada vez que escribas una función que lee datos,
 los transforma y los guarda, preguntate primero qué pasa la segunda vez
 que la corrés — esa sola pregunta ya te lleva a separar la lógica de la
 I/O, a pensar en idempotencia, y a no hardcodear nada que pueda cambiar.
+
+### Temas que le pediría investigar por su cuenta
+
+- **Ejecución distribuida vs. modo local**: por qué `pd.read_csv` +
+  `iterrows()` rompe el paralelismo aunque el resultado final se envuelva
+  en un `spark.createDataFrame` — qué hace un `DataFrame` de Spark distinto
+  a uno de pandas por dentro (plan lógico/físico, `explain()`).
+- **Particionamiento y `partitionOverwriteMode`**: la diferencia entre
+  `overwrite` a secas, `overwrite` con `partitionBy` + modo `dynamic`, y
+  `replaceWhere` (lo que usa `delta_io.py` en el pipeline real) — cuándo
+  usar cada uno y por qué el bug de `bad_code.py` (punto 7) es tan fácil de
+  cometer sin saber esto.
+- **Delta Lake vs. Parquet plano**: qué gana el proyecto real con
+  `MERGE INTO` y el transaction log de Delta que `good_code.py` (Parquet
+  simple) no tiene — ACID, time travel, `MERGE` para upserts sin tener que
+  sobrescribir toda una partición.
+- **Testing de transformaciones Spark**: cómo se construye un DataFrame
+  sintético en memoria para testear sin leer un CSV real (el patrón
+  `_rows_to_df` de `tests/test_transformations.py`), y por qué separar
+  lógica pura (`compute_routine_deliveries`) de I/O (`process_tenant`) es
+  lo que hace eso posible.
+- **Manejo de errores en pipelines batch**: la diferencia entre fallar
+  rápido (`fail_fast`) y seguir procesando lo que se pueda reportando al
+  final qué falló (el patrón de `main()` en `good_code.py` y en
+  `cli.py` real) — cuándo conviene cada estrategia.

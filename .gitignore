@@ -8,3 +8,4 @@ data_main/
 *.egg-info/
 .pytest_cache/
 .ruff_cache/
+NOTES_observations_borrador.md
